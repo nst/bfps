@@ -1,0 +1,39 @@
+% A Brainfuck interpreter written in PostScript
+% 2023-12-05 Nicolas Seriot https://github.com/nst/bfps
+% ps2pdf bf.ps && open bf.ps
+
+/Courier findfont 12 scalefont setfont
+12 12 moveto
+
+/P (+[-[<<[+[--->]-[<<<]]]>>>-]>-.-- -.>..>.<<<<-.<+.>>>>>.>.<<.<-.) def
+/p 0 def												% program pointer
+
+/M 30000 string def										% memory array
+/m 0 def												% memory pointer
+/V { M m get } def										% current mem value
+
+/j P length array def									% jump table
+0 1 P length 1 sub {									% fill in jump table
+	/i exch def
+	/c P i 1 getinterval def
+	c ([) eq { i } if
+	c (]) eq { /x exch def j i x put j x i put } if
+} for
+
+{
+	p P length ge { exit } if							% exit if out of prog
+	/C P p 1 getinterval def							% read program char
+
+	C (+) eq { M m V 1 add 255 and put } if				% increment mem value
+	C (-) eq { M m V 1 sub 255 and put } if				% decrement mem value
+	C (>) eq { /m m 1 add def } if						% move p to right
+	C (<) eq { /m m 1 sub def } if						% move p to left
+	C ([) eq { V 0 eq { /p j p get def } if } if		% jump fwd if V == 0
+	C (]) eq { V 0 ne { /p j p get def } if } if        % jump bwd if V != 0
+	C (.) eq { /s 1 string def s 0 V put s show } if    % show mem value
+	C (,) eq {                                          % user input char
+		/f (%lineedit) (r) file def f read pop M m 3 -1 roll put
+	} if
+
+	/p p 1 add def                                      % move p to right
+} loop

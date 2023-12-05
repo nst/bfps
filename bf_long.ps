@@ -1,0 +1,128 @@
+% A Brainfuck interpreter written in PostScript
+% 2023-12-05 Nicolas Seriot https://github.com/nst/bfps
+% ps2pdf bf_long.ps && open bf_long.ps
+
+/Courier findfont 12 scalefont setfont
+32 740 moveto
+
+/INIT_DATA { % | -
+	
+	/P null def % program
+	/p 0 def
+
+	% memory
+	/M 30000 string def
+	/m 0 def
+	/V { M m get } def
+	
+	% result array
+	/R 100 string def
+	/r 0 def
+	
+	% program pointer
+	/p 0 def
+	
+	/step 0 def	
+} def
+
+/INIT_UTILS {
+
+	/ARRAYEQ { % from 'Thinking in PostScript' p. 33
+		2 copy eq {
+			pop pop true
+		} {
+			2 copy length exch length eq {
+				true 0 1 3 index length 1 sub {
+					3 index 1 index get 3 index 2 index get eq exch pop and
+				} for exch pop exch pop
+			} {
+				pop pop false
+			} ifelse
+		} ifelse
+	} bind def
+
+	/PRINT_ARRAY_OF_CHARS { % | -
+		{ 1 string dup 0 4 -1 roll put print } forall (\n) print flush
+	} def
+	/PRINT_ARRAY { % | -
+		{ 8 string cvs print ( ) print } forall (\n) print
+	} def
+
+	/SHOW_STATE {
+		(step:) step
+		(| p[) p (] =) P p get	
+		(| m[) m (] =) M m get
+		10 array astore PRINT_ARRAY
+	} def
+} def
+
+/EXEC { % program | -
+	
+	/P exch def
+
+	P ==
+	
+	% jumps
+	/j P length array def
+	0 1 P length 1 sub {
+		/i exch def
+		/c P i 1 getinterval def
+		c ([) eq { i } if
+		c (]) eq { /x exch def j i x put j x i put } if
+	} for
+
+	{
+		p P length ge { exit } if
+		/C P p 1 getinterval def
+
+		SHOW_STATE
+
+		C (+) eq { M m V 1 add 255 and put } if
+		C (-) eq { M m V 1 sub 255 and put } if
+		C (>) eq { /m m 1 add def } if
+		C (<) eq { /m m 1 sub def } if
+		C ([) eq { V 0 eq { /p j p get def } if } if
+		C (]) eq { V 0 ne { /p j p get def } if } if
+		C (.) eq { R r V put /r r 1 add def } if
+		C (,) eq {/f (%lineedit) (r) file def f read pop M m 3 -1 roll put} if
+		
+		/p p 1 add def
+	} loop
+
+	/RESULT R 0 r getinterval def
+} def
+
+/TEST { % program, expected_result | -
+	
+	/expected exch def
+
+	INIT_DATA
+	
+	EXEC
+	
+	%pa ==
+	%ma ==
+		
+	(expected: ) print expected { 3 string cvs print ( ) print } forall (\n) print
+	(expected: ) print expected PRINT_ARRAY_OF_CHARS
+	
+	(result: ) print RESULT { 3 string cvs print ( ) print } forall (\n) print
+	(result: ) print RESULT print (\n) print
+		
+	RESULT expected ARRAYEQ { (SUCCESS\n) print } { (FAILURE\n) } ifelse
+} def
+
+INIT_UTILS
+
+(+.-..) 1 0 0 3 array astore TEST
+(+asd.-..) 1 0 0 3 array astore TEST
+(-.) 255 1 array astore TEST
+(+-[+]+.) 1 1 array astore TEST
+(++++++[>++++++<-]>.) 36 1 array astore TEST % '$'
+(--[----->+<]>-----.) (a) TEST
+(+- xxx [+]+.) 1 1 array astore TEST
+(>+++++++++[<++++++++>-]<.>+++++++[<++++>-]<+.+++++++..+++.>>>++++++++[<++++>-]<.>>>++++++++++[<+++++++++>-]<---.<<<<.+++.------.--------.>>+.>++++++++++.) (Hello World!\n) TEST
+(+[-[<<[+[--->]-[<<<]]]>>>-]>-.---.>..>.<<<<-.<+.>>>>>.>.<<.<-.) (hello world) TEST
+%(,>+++[-<.>]) (AAA) TEST % A -> AAA
+
+RESULT show
