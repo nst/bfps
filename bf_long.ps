@@ -87,12 +87,11 @@
 	    C ([) eq {
 			p
 			V 0 eq {
-				/n 0 def % skip brackets count
-
+				mark
 				{
-					C ([) eq { /n n 1 add def } if
-					C (]) eq { /n n 1 sub def } if
-					n 0 eq { exit } if
+					C ([) eq { 0 } if
+					C (]) eq { pop } if
+					counttomark 0 eq { pop exit } if
 					_
 				} loop
 			} if

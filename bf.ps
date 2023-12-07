@@ -24,11 +24,11 @@
     C ([) eq {
         p                                               % push p on stack
         V 0 eq {                                        % if V == 0
-            /n 0 def
+            mark
             {                                           % move after matching ]
-                C ([) eq { /n n 1 add def } if
-                C (]) eq { /n n 1 sub def } if
-                n 0 eq { exit } if
+                C ([) eq { 0 } if
+                C (]) eq { pop } if
+                counttomark 0 eq { pop exit } if
                 /p p 1 add def
             } loop                                      
         } if
