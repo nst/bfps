@@ -9,9 +9,9 @@
 	
 	/P null def % program
 	/p 0 def
-
+	
 	% memory
-	/M 30000 string def
+	/M 100 string def
 	/m 0 def
 	/V { M m get } def
 	
@@ -21,7 +21,7 @@
 	
 	% program pointer
 	/p 0 def
-	
+		
 	/step 0 def	
 } def
 
@@ -44,8 +44,13 @@
 	/PRINT_ARRAY_OF_CHARS { % | -
 		{ 1 string dup 0 4 -1 roll put print } forall (\n) print flush
 	} def
+	
 	/PRINT_ARRAY { % | -
 		{ 8 string cvs print ( ) print } forall (\n) print
+	} def
+	
+	/PRINT_CHAR {
+		1 string dup 0 4 -1 roll put print
 	} def
 
 	/SHOW_STATE {
@@ -53,8 +58,13 @@
 		(| p[) p (] =) P p get	
 		(| m[) m (] =) M m get
 		10 array astore PRINT_ARRAY
+		M PRINT_ARRAY
 	} def
 } def
+
+/C { P p 1 getinterval } def
+
+/_ { /p p 1 add def } def
 
 /EXEC { % program | -
 	
@@ -62,31 +72,44 @@
 
 	P ==
 	
-	% jumps
-	/j P length array def
-	0 1 P length 1 sub {
-		/i exch def
-		/c P i 1 getinterval def
-		c ([) eq { i } if
-		c (]) eq { /x exch def j i x put j x i put } if
-	} for
-
 	{
 		p P length ge { exit } if
-		/C P p 1 getinterval def
 
 		SHOW_STATE
+
+		(\n) print C print (\n) print
 
 		C (+) eq { M m V 1 add 255 and put } if
 		C (-) eq { M m V 1 sub 255 and put } if
 		C (>) eq { /m m 1 add def } if
 		C (<) eq { /m m 1 sub def } if
-		C ([) eq { V 0 eq { /p j p get def } if } if
-		C (]) eq { V 0 ne { /p j p get def } if } if
-		C (.) eq { R r V put /r r 1 add def } if
-		C (,) eq {/f (%lineedit) (r) file def f read pop M m 3 -1 roll put} if
 		
-		/p p 1 add def
+	    C ([) eq {
+			p
+			V 0 eq {
+				/n 0 def % skip brackets count
+
+				{
+					C ([) eq { /n n 1 add def } if
+					C (]) eq { /n n 1 sub def } if
+					n 0 eq { exit } if
+					_
+				} loop
+			} if
+		} if
+		
+		C (]) eq {
+			/x exch def
+			V 0 ne { /p x def p	} if
+		} if
+		
+		C (.) eq { R r V put /r r 1 add def } if
+		C (,) eq {/f (%lineedit) (r) file def f read pop M m 3 -1 roll put } if
+		
+		_
+		
+		/step step 1 add def
+		
 	} loop
 
 	/RESULT R 0 r getinterval def
@@ -106,7 +129,7 @@
 	(expected: ) print expected { 3 string cvs print ( ) print } forall (\n) print
 	(expected: ) print expected PRINT_ARRAY_OF_CHARS
 	
-	(result: ) print RESULT { 3 string cvs print ( ) print } forall (\n) print
+	(result: ) print RESULT { 4 string cvs print ( ) print } forall (\n) print
 	(result: ) print RESULT print (\n) print
 		
 	RESULT expected ARRAYEQ { (SUCCESS\n) print } { (FAILURE\n) } ifelse
@@ -114,10 +137,17 @@
 
 INIT_UTILS
 
+([]+.) 1 1 array astore TEST
+([[]]+.) 1 1 array astore TEST
+
 (+.-..) 1 0 0 3 array astore TEST
 (+asd.-..) 1 0 0 3 array astore TEST
 (-.) 255 1 array astore TEST
 (+-[+]+.) 1 1 array astore TEST
+
+(+++>++<[>[->+>+<<]>[-<+>]<<-]>>>.) 6 1 array astore TEST
+(++++++++++>+++++<[>[->+>+<<]>[-<+>]<<-]>>>.) (2) TEST
+
 (++++++[>++++++<-]>.) 36 1 array astore TEST % '$'
 (--[----->+<]>-----.) (a) TEST
 (+- xxx [+]+.) 1 1 array astore TEST

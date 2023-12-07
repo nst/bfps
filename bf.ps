@@ -3,33 +3,42 @@
 % ps2pdf bf.ps && open bf.pdf
 
 /Courier findfont 12 scalefont setfont
-12 12 moveto
+32 740 moveto
 
 /P (+[-[<<[+[--->]-[<<<]]]>>>-]>-.-- -.>..>.<<<<-.<+.>>>>>.>.<<.<-.) def
 /p 0 def                                                % program pointer
+/C { P p 1 getinterval } def                            % read program char
 
 /M 30000 string def                                     % memory array
 /m 0 def                                                % memory pointer
-/V { M m get } def                                      % current mem value
-
-/j P length array def                                   % jump table
-0 1 P length 1 sub {                                    % fill in jump table
-    /i exch def
-    /c P i 1 getinterval def
-    c ([) eq { i } if
-    c (]) eq { /x exch def j i x put j x i put } if
-} for
+/V { M m get } def                                      % read mem value
 
 {
     p P length ge { exit } if                           % exit if out of prog
-    /C P p 1 getinterval def                            % read program char
 
     C (+) eq { M m V 1 add 255 and put } if             % increment mem value
     C (-) eq { M m V 1 sub 255 and put } if             % decrement mem value
     C (>) eq { /m m 1 add def } if                      % move p to right
     C (<) eq { /m m 1 sub def } if                      % move p to left
-    C ([) eq { V 0 eq { /p j p get def } if } if        % jump fwd if V == 0
-    C (]) eq { V 0 ne { /p j p get def } if } if        % jump bwd if V != 0
+
+    C ([) eq {
+		p                                               % push p on stack
+		V 0 eq {                                        % if V == 0
+			/n 0 def
+			{                                           % move p to matching ]
+				C ([) eq { /n n 1 add def } if
+				C (]) eq { /n n 1 sub def } if
+				n 0 eq { exit } if
+				/p p 1 add def
+			} loop                                      
+		} if
+	} if
+	
+	C (]) eq {
+		/x exch def                                     % pop p for matching [
+		V 0 ne { /p x def p	} if                        % jump back if V != 0
+	} if
+	
     C (.) eq { /s 1 string def s 0 V put s show } if    % show mem value
     C (,) eq { /f (%lineedit) (r) file def f read pop M m 3 -1 roll put } if
 

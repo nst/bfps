@@ -1,15 +1,15 @@
 % A Brainfuck interpreter written in PostScript
 % 2023-12-05 Nicolas Seriot https://github.com/nst/bfps
-% ps2pdf bf_tiny.ps && open bf_tiny.pdf
+% ps2pdf bf.ps && open bf.pdf
 
-/P(+[-[<<[+[--->]-[<<<]]]>>>-]>-.---.>..>.<<<<-.<+.>>>>>.>.<<.<-.)def
+/Courier findfont 12 scalefont setfont
+32 740 moveto
 
-/Courier findfont 12 scalefont setfont 32 740 moveto
+/P (+[-[<<[+[--->]-[<<<]]]>>>-]>-.-- -.>..>.<<<<-.<+.>>>>>.>.<<.<-.) def
 
-/p 0 def/M 30000 string def/m 0 def/V{M m get}def/j P length array def 0 1 P
-length 1 sub{/i exch def/c P i 1 getinterval def c([)eq{i}if c(])eq{/x exch def
-j i x put j x i put}if}for/_{V add 255 and M m 3 -1 roll put}def{p P length ge{
-exit}if/C P p 1 getinterval def C(+)eq{1 _}if C(-)eq{-1 _}if C(>)eq{/m m 1 add
-def}if C(<)eq{/m m 1 sub def}if C([)eq{V 0 eq{/p j p get def}if}if C(])eq{V 0
-ne{/p j p get def}if}if C(.)eq{/s 1 string def s 0 V put s show}if C(,)eq{/f
-(%lineedit)(r)file def f read pop M m 3 -1 roll put}if/p p 1 add def}loop
+/d{def}def/p 0 d/_{/p p 1 add d}d/C{P p 1 getinterval}d/M 30000 string d/m 0 d
+/V{M m get}d{p P length ge{exit}if C(+)eq{M m V 1 add 255 and put}if C(-)eq{M m
+V 1 sub 255 and put}if C(>)eq{/m m 1 add d}if C(<)eq{/m m 1 sub d}if C([)eq{p V
+0 eq{/n 0 d{C([)eq{/n n 1 add d}if C(])eq{/n n 1 sub d}if n 0 eq{exit}if _}loop
+}if}if C(])eq{/x exch d V 0 ne{/p x d p}if}if C(.)eq{/s 1 string d s 0 V put s
+show}if C(,)eq{/f(%lineedit)(r)file d f read pop M m 3 -1 roll put}if _}loop
