@@ -22,23 +22,23 @@
     C (<) eq { /m m 1 sub def } if                      % move p to left
 
     C ([) eq {
-		p                                               % push p on stack
-		V 0 eq {                                        % if V == 0
-			/n 0 def
-			{                                           % move p to matching ]
-				C ([) eq { /n n 1 add def } if
-				C (]) eq { /n n 1 sub def } if
-				n 0 eq { exit } if
-				/p p 1 add def
-			} loop                                      
-		} if
-	} if
-	
-	C (]) eq {
-		/x exch def                                     % pop p for matching [
-		V 0 ne { /p x def p	} if                        % jump back if V != 0
-	} if
-	
+        p                                               % push p on stack
+        V 0 eq {                                        % if V == 0
+            /n 0 def
+            {                                           % move after matching ]
+                C ([) eq { /n n 1 add def } if
+                C (]) eq { /n n 1 sub def } if
+                n 0 eq { exit } if
+                /p p 1 add def
+            } loop                                      
+        } if
+    } if
+    
+    C (]) eq {
+        /x exch def                                     % pop p for matching [
+        V 0 ne { /p x def p    } if                     % jump back if V != 0
+    } if
+    
     C (.) eq { /s 1 string def s 0 V put s show } if    % show mem value
     C (,) eq { /f (%lineedit) (r) file def f read pop M m 3 -1 roll put } if
 
